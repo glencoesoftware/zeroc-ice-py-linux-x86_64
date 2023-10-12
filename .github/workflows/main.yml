@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository and submodules
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build
         run: |
           docker build -t builder .
@@ -24,7 +24,7 @@ jobs:
           docker run --rm -v $PWD/zeroc-ice-3.6.5:/build builder /bin/bash -c "cd /build ; /opt/python/${{ matrix.version }}/bin/python setup.py bdist_wheel"
           docker run --rm -v $PWD/zeroc-ice-3.6.5:/build builder auditwheel repair --plat 'manylinux2014_x86_64' -w /build/dist /build/dist/zeroc_ice-3.6.5-${{ matrix.version }}-linux_x86_64.whl
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: artifacts
           path: zeroc-ice-3.6.5/dist/*manylinux*.whl
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts from build
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
       - name: List artifacts
         run: ls -R
       - name: Release
