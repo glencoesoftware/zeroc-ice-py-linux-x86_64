@@ -21,6 +21,8 @@ jobs:
         run: |
           curl -J -O -L 'https://pypi.io/packages/source/z/zeroc-ice/zeroc-ice-3.6.5.tar.gz'
           tar zxf zeroc-ice-3.6.5.tar.gz
+          patch -p0 < 0001-numpy-parallel-compiler-and-syntax.patch
+          docker run --rm -v $PWD/zeroc-ice-3.6.5:/build builder /bin/bash -c "cd /build ; /opt/python/${{ matrix.version }}/bin/python setup.py build -j 3"
           docker run --rm -v $PWD/zeroc-ice-3.6.5:/build builder /bin/bash -c "cd /build ; /opt/python/${{ matrix.version }}/bin/python setup.py bdist_wheel"
           docker run --rm -v $PWD/zeroc-ice-3.6.5:/build builder auditwheel repair --plat 'manylinux2014_x86_64' -w /build/dist /build/dist/zeroc_ice-3.6.5-${{ matrix.version }}-linux_x86_64.whl
       - name: Upload artifacts

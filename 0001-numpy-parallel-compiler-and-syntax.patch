@@ -1,0 +1,26 @@
+--- zeroc-ice-3.6.5.orig/setup.py	2019-07-31 21:49:38.000000000 +0200
++++ zeroc-ice-3.6.5/setup.py	2023-10-11 15:19:06.069872372 +0200
+@@ -4,6 +4,14 @@
+ #
+ # **********************************************************************
+ 
++try:
++    from numpy.distutils.ccompiler import CCompiler_compile
++    import distutils.ccompiler
++    distutils.ccompiler.CCompiler.compile = CCompiler_compile
++    print("numpy found, parallel compile is available")
++except ImportError:
++    print("numpy not found, parallel compile not available")
++
+ # Always prefer setuptools over distutils
+ try:
+     from setuptools import setup
+@@ -108,7 +116,7 @@
+         libraries = ["IceSSL", "Ice", "Slice", "IceUtil"]
+     else:
+         libraries=['ssl', 'crypto', 'bz2', 'rt']
+-        if platform is not 'freebsd':
++        if platform != 'freebsd':
+             libraries.append('dl')
+ 
+     def filterName(path):
