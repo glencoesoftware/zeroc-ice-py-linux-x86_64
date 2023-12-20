@@ -9,7 +9,12 @@ jobs:
   build:
     strategy:
       matrix:
-        version: ['cp38-cp38', 'cp39-cp39', 'cp310-cp310', 'cp311-cp311']
+        version:
+          - 'cp38-cp38'
+          - 'cp39-cp39'
+          - 'cp310-cp310'
+          - 'cp311-cp311'
+          - 'cp312-cp312'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository and submodules
