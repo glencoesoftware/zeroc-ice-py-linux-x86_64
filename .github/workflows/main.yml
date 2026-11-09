@@ -9,16 +9,16 @@ jobs:
   build:
     strategy:
       matrix:
-        version:
-          - 'cp38-cp38'
-          - 'cp39-cp39'
+        python-version:
           - 'cp310-cp310'
           - 'cp311-cp311'
           - 'cp312-cp312'
+          - 'cp313-cp313'
+          - 'cp314-cp314'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository and submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: true
       - name: Build
@@ -29,13 +29,13 @@ jobs:
           curl -J -O -L 'https://pypi.io/packages/source/z/zeroc-ice/zeroc-ice-3.6.5.tar.gz'
           tar zxf zeroc-ice-3.6.5.tar.gz
           for f in patches/*; do patch -p0 < ${f}; done
-          docker run --rm -v $PWD/zeroc-ice-3.6.5:/build builder /bin/bash -c "cd /build ; /opt/python/${{ matrix.version }}/bin/python setup.py build -j 3"
-          docker run --rm -v $PWD/zeroc-ice-3.6.5:/build builder /bin/bash -c "cd /build ; /opt/python/${{ matrix.version }}/bin/python setup.py bdist_wheel"
-          docker run --rm -v $PWD/zeroc-ice-3.6.5:/build builder auditwheel repair --plat 'manylinux_2_28_x86_64' -w /build/dist /build/dist/zeroc_ice-3.6.5-${{ matrix.version }}-linux_x86_64.whl
+          docker run --rm -v $PWD/zeroc-ice-3.6.5:/build builder /bin/bash -c "cd /build ; /opt/python/${{ matrix.python-version }}/bin/python setup.py build -j 3"
+          docker run --rm -v $PWD/zeroc-ice-3.6.5:/build builder /bin/bash -c "cd /build ; /opt/python/${{ matrix.python-version }}/bin/python setup.py bdist_wheel"
+          docker run --rm -v $PWD/zeroc-ice-3.6.5:/build builder auditwheel repair --only-plat --plat 'manylinux_2_28_x86_64' -w /build/dist /build/dist/zeroc_ice-3.6.5-${{ matrix.python-version }}-linux_x86_64.whl
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v7
         with:
-          name: artifacts
+          name: artifacts-${{ matrix.python-version }}
           path: zeroc-ice-3.6.5/dist/*manylinux*.whl
           if-no-files-found: error
   release:
@@ -43,12 +43,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
       - name: Download artifacts from build
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v8
       - name: List artifacts
         run: ls -R
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            artifacts/*.whl
+      - name: Create a GitHub release
+        if: startsWith(github.ref, 'refs/tags')
+        run: gh release create --generate-notes "${GITHUB_REF#refs/tags/}" artifacts*/*.whl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
